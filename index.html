@@ -208,7 +208,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/01/10/jvm-introduction/" class="post-title-link" itemprop="url">jvm-introduction</a>
+            <a href="/2022/01/10/jvm-introduction/" class="post-title-link" itemprop="url">Java虚拟机简介</a>
         </h2>
 
         <div class="post-meta">
@@ -232,7 +232,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="一、JVM组成"><a href="#一、JVM组成" class="headerlink" title="一、JVM组成"></a>一、JVM组成</h2><h3 id="1-运行时数据区"><a href="#1-运行时数据区" class="headerlink" title="1. 运行时数据区"></a>1. 运行时数据区</h3><h4 id="a-线程共享区域"><a href="#a-线程共享区域" class="headerlink" title="a. 线程共享区域"></a>a. 线程共享区域</h4><ul>
+          <h2 id="JVM组成"><a href="#JVM组成" class="headerlink" title="JVM组成"></a>JVM组成</h2><h3 id="运行时数据区"><a href="#运行时数据区" class="headerlink" title="运行时数据区"></a>运行时数据区</h3><ol>
+<li><p>线程共享区域</p>
+<ul>
 <li><p>方法区</p>
 <p>  用于存储已被虚拟机加载的类型信息、常量、静态变量、即时编译器编译后的代码缓存等数据。尽管Java虚拟机规范把堆描述为堆的一个逻辑部分，但它却有一个别名，非堆，Non-Heap，目的是与Java堆区分。jdk8之前，hotspot虚拟机用永久代（-XX: MaxPermSize）来实现方法区，以便垃圾回收器能像管理堆一样管理这部分内存，这种设计导致应用更容易遇到内存溢出的问题，后改为在本地内存中实现元空间（Meta-space）来代替。这部分区域的内存回收目标主要是针对常量池的回收和对类型的卸载，但效果并不好，尤其是类型的卸载，条件相当苛刻。如果方法区无法满足新的内存分配需求时，将跑出OutOfMemoryError异常。</p>
 <blockquote>
@@ -243,7 +245,9 @@
 <p>  虚拟机管理的内存中最大的一块，被所有线程共享，在虚拟机启动时创建，唯一目的就是存放对象实例。从分配内存的角度看，所有线程共享的Java堆中可以划分出多个线程私有的分配缓冲区（TLAB），以提升对象分配时的效率。将Java堆细分的目的只是为了更好地回收内存或者更快地分配内存。如果堆中没有内存完成实例分配，并且堆也无法再扩展，将OutOfMemoryError。</p>
 </li>
 </ul>
-<h4 id="b-线程私有区域"><a href="#b-线程私有区域" class="headerlink" title="b. 线程私有区域"></a>b. 线程私有区域</h4><ul>
+</li>
+<li><p>线程私有区域</p>
+<ul>
 <li><p>程序计数器</p>
 <p>  唯一在《java虚拟机规范》中没有规定任何oom error情况的区域</p>
 </li>
@@ -260,8 +264,10 @@
 <p>  与虚拟机栈相似，但为虚拟机使用到的本地方法服务。与虚拟机栈一样会抛出StackOverflowError和OutOfMemoryError。HotSpot虚拟机直接将本地方法栈与虚拟机栈合二为一。</p>
 </li>
 </ul>
-<h4 id="c-直接内存"><a href="#c-直接内存" class="headerlink" title="c. 直接内存"></a>c. 直接内存</h4><p>并不是运行时数据区的一部分，也不是java虚拟机规范定义的内存区域。在jdk1.4中新加入了NIO（New Input/Output）类，引入一种基于通道与缓冲区的IO方式，可以使用Native函数库直接分配堆外内存，通过一个存储在Java堆中DirectByteBuffer对象作为这块内存的引用进行操作，在一些场景显著提高性能，避免在Java堆和Native堆中来回复制数据。直接内存不受Java堆大小的限制，但受本机总内存及处理器寻址空间的限制，各内存区域总和大于物理内存限制也会导致动态扩展时出现OutOfMemoryError异常</p>
-<h3 id="2-类加载子系统"><a href="#2-类加载子系统" class="headerlink" title="2. 类加载子系统"></a>2. 类加载子系统</h3><h3 id="3-执行引擎"><a href="#3-执行引擎" class="headerlink" title="3. 执行引擎"></a>3. 执行引擎</h3><h3 id="4-本地库接口"><a href="#4-本地库接口" class="headerlink" title="4. 本地库接口"></a>4. 本地库接口</h3><h3 id="5-本地方法库"><a href="#5-本地方法库" class="headerlink" title="5. 本地方法库"></a>5. 本地方法库</h3><h2 id="二、HotSpot虚拟机对象创建"><a href="#二、HotSpot虚拟机对象创建" class="headerlink" title="二、HotSpot虚拟机对象创建"></a>二、HotSpot虚拟机对象创建</h2><h3 id="对象的创建："><a href="#对象的创建：" class="headerlink" title="对象的创建："></a>对象的创建：</h3><ol>
+</li>
+</ol>
+<h4 id="直接内存"><a href="#直接内存" class="headerlink" title="直接内存"></a>直接内存</h4><p>并不是运行时数据区的一部分，也不是java虚拟机规范定义的内存区域。在jdk1.4中新加入了NIO（New Input/Output）类，引入一种基于通道与缓冲区的IO方式，可以使用Native函数库直接分配堆外内存，通过一个存储在Java堆中DirectByteBuffer对象作为这块内存的引用进行操作，在一些场景显著提高性能，避免在Java堆和Native堆中来回复制数据。直接内存不受Java堆大小的限制，但受本机总内存及处理器寻址空间的限制，各内存区域总和大于物理内存限制也会导致动态扩展时出现OutOfMemoryError异常</p>
+<h3 id="类加载子系统"><a href="#类加载子系统" class="headerlink" title="类加载子系统"></a>类加载子系统</h3><h3 id="执行引擎"><a href="#执行引擎" class="headerlink" title="执行引擎"></a>执行引擎</h3><h3 id="本地库接口"><a href="#本地库接口" class="headerlink" title="本地库接口"></a>本地库接口</h3><h3 id="本地方法库"><a href="#本地方法库" class="headerlink" title="本地方法库"></a>本地方法库</h3><h2 id="HotSpot虚拟机对象创建"><a href="#HotSpot虚拟机对象创建" class="headerlink" title="HotSpot虚拟机对象创建"></a>HotSpot虚拟机对象创建</h2><h3 id="对象的创建："><a href="#对象的创建：" class="headerlink" title="对象的创建："></a>对象的创建：</h3><ol>
 <li><p>字节码new指令</p>
 </li>
 <li><p>检查这个指令的参数是否能在常量池中定位到一个类的符号引用，并检查这个符号引用代表的类是否已被加载连接初始化，如果没有则执行相应类加载过程</p>
@@ -305,7 +311,7 @@
 <li>句柄：堆中划分一块内存来作为句柄池，reference中存储的是对象的句柄地址。句柄中包含对象实例数据和类型数据各自具体的地址信息。好处是reference中存储的是稳定句柄地址，对象移动时只会改变句柄中的实例数据指针，reference本身不需要被修改</li>
 <li>直接指针：堆中对象的内存布局需考虑如何防止访问类型数据的相关信息，reference中存储的直接就是对象地址。只是访问对象本身的话，就不需要多一次间接访问的开销</li>
 </ol>
-<h2 id="三、OOM分析"><a href="#三、OOM分析" class="headerlink" title="三、OOM分析"></a>三、OOM分析</h2><h3 id="Java堆溢出"><a href="#Java堆溢出" class="headerlink" title="Java堆溢出"></a>Java堆溢出</h3><p>不断创建对象，并保证GC Roots到对象之间有可达路径来避免垃圾回收机制清楚这些对象，那么随着对象数量增加，总容量触及最大堆容量限制就会产生内存溢出异常。xms和xmx配置一样则不可自动扩展</p>
+<h2 id="OOM分析"><a href="#OOM分析" class="headerlink" title="OOM分析"></a>OOM分析</h2><h3 id="Java堆溢出"><a href="#Java堆溢出" class="headerlink" title="Java堆溢出"></a>Java堆溢出</h3><p>不断创建对象，并保证GC Roots到对象之间有可达路径来避免垃圾回收机制清楚这些对象，那么随着对象数量增加，总容量触及最大堆容量限制就会产生内存溢出异常。xms和xmx配置一样则不可自动扩展</p>
 <ol>
 <li><p>现象：java.lang.OutOfMemoryError后跟Java heap space</p>
 </li>
