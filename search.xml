@@ -42,4 +42,109 @@
         <tag>Java</tag>
       </tags>
   </entry>
+  <entry>
+    <title>jvm-introduction</title>
+    <url>/2022/01/10/jvm-introduction/</url>
+    <content><![CDATA[<h2 id="一、JVM组成"><a href="#一、JVM组成" class="headerlink" title="一、JVM组成"></a>一、JVM组成</h2><h3 id="1-运行时数据区"><a href="#1-运行时数据区" class="headerlink" title="1. 运行时数据区"></a>1. 运行时数据区</h3><h4 id="a-线程共享区域"><a href="#a-线程共享区域" class="headerlink" title="a. 线程共享区域"></a>a. 线程共享区域</h4><ul>
+<li><p>方法区</p>
+<p>  用于存储已被虚拟机加载的类型信息、常量、静态变量、即时编译器编译后的代码缓存等数据。尽管Java虚拟机规范把堆描述为堆的一个逻辑部分，但它却有一个别名，非堆，Non-Heap，目的是与Java堆区分。jdk8之前，hotspot虚拟机用永久代（-XX: MaxPermSize）来实现方法区，以便垃圾回收器能像管理堆一样管理这部分内存，这种设计导致应用更容易遇到内存溢出的问题，后改为在本地内存中实现元空间（Meta-space）来代替。这部分区域的内存回收目标主要是针对常量池的回收和对类型的卸载，但效果并不好，尤其是类型的卸载，条件相当苛刻。如果方法区无法满足新的内存分配需求时，将跑出OutOfMemoryError异常。</p>
+<blockquote>
+<p>运行时常量池：具备动态性，在运行期间也可以将新的常量放入池中。作为方法区的一部分，当无法再申请到内存时会抛出OutOfMemoryError异常</p>
+</blockquote>
+</li>
+<li><p>堆</p>
+<p>  虚拟机管理的内存中最大的一块，被所有线程共享，在虚拟机启动时创建，唯一目的就是存放对象实例。从分配内存的角度看，所有线程共享的Java堆中可以划分出多个线程私有的分配缓冲区（TLAB），以提升对象分配时的效率。将Java堆细分的目的只是为了更好地回收内存或者更快地分配内存。如果堆中没有内存完成实例分配，并且堆也无法再扩展，将OutOfMemoryError。</p>
+</li>
+</ul>
+<h4 id="b-线程私有区域"><a href="#b-线程私有区域" class="headerlink" title="b. 线程私有区域"></a>b. 线程私有区域</h4><ul>
+<li><p>程序计数器</p>
+<p>  唯一在《java虚拟机规范》中没有规定任何oom error情况的区域</p>
+</li>
+<li><p>虚拟机栈</p>
+<p>  java方法执行的线程内存模型，每个方法被执行时，会同步创建一个栈帧用于存储局部变量表、操作数栈、动态连接、方法出口等信息，从被调用到执行完毕，对应入栈到出栈的过程</p>
+<blockquote>
+<ul>
+<li>如果线程请求的栈深度大于虚拟机所允许的深度，将抛出StackOverflowError异常</li>
+<li>如果Java虚拟机栈容量可以动态扩展，当栈扩展时无法申请到足够的内存会抛出OutOfMemoryError异常。HotSpot不支持动态扩展，但如果申请时就失败，仍会出现OOM异常</li>
+</ul>
+</blockquote>
+</li>
+<li><p>本地方法栈</p>
+<p>  与虚拟机栈相似，但为虚拟机使用到的本地方法服务。与虚拟机栈一样会抛出StackOverflowError和OutOfMemoryError。HotSpot虚拟机直接将本地方法栈与虚拟机栈合二为一。</p>
+</li>
+</ul>
+<h4 id="c-直接内存"><a href="#c-直接内存" class="headerlink" title="c. 直接内存"></a>c. 直接内存</h4><p>并不是运行时数据区的一部分，也不是java虚拟机规范定义的内存区域。在jdk1.4中新加入了NIO（New Input/Output）类，引入一种基于通道与缓冲区的IO方式，可以使用Native函数库直接分配堆外内存，通过一个存储在Java堆中DirectByteBuffer对象作为这块内存的引用进行操作，在一些场景显著提高性能，避免在Java堆和Native堆中来回复制数据。直接内存不受Java堆大小的限制，但受本机总内存及处理器寻址空间的限制，各内存区域总和大于物理内存限制也会导致动态扩展时出现OutOfMemoryError异常</p>
+<h3 id="2-类加载子系统"><a href="#2-类加载子系统" class="headerlink" title="2. 类加载子系统"></a>2. 类加载子系统</h3><h3 id="3-执行引擎"><a href="#3-执行引擎" class="headerlink" title="3. 执行引擎"></a>3. 执行引擎</h3><h3 id="4-本地库接口"><a href="#4-本地库接口" class="headerlink" title="4. 本地库接口"></a>4. 本地库接口</h3><h3 id="5-本地方法库"><a href="#5-本地方法库" class="headerlink" title="5. 本地方法库"></a>5. 本地方法库</h3><h2 id="二、HotSpot虚拟机对象创建"><a href="#二、HotSpot虚拟机对象创建" class="headerlink" title="二、HotSpot虚拟机对象创建"></a>二、HotSpot虚拟机对象创建</h2><h3 id="对象的创建："><a href="#对象的创建：" class="headerlink" title="对象的创建："></a>对象的创建：</h3><ol>
+<li><p>字节码new指令</p>
+</li>
+<li><p>检查这个指令的参数是否能在常量池中定位到一个类的符号引用，并检查这个符号引用代表的类是否已被加载连接初始化，如果没有则执行相应类加载过程</p>
+</li>
+<li><p>为新生对象分配内存</p>
+<ul>
+<li><p>如果内存规整：指针碰撞。规整取决于垃圾收集器是否整理（Serial、ParNew等）。</p>
+<blockquote>
+<p>解决并发有两种方式：</p>
+<ul>
+<li>CAS+重试</li>
+<li>本地线程分配缓冲TLAB，通过-XX: +/-UseTLAB</li>
+</ul>
+</blockquote>
+</li>
+<li><p>内存不规整：空闲列表（CMS，但设计了一个LinearAllocationBuffer的分配缓冲区，从空闲列表拿到一大块分配缓冲区后使用指针碰撞）</p>
+</li>
+</ul>
+</li>
+<li><p>将分配到的内存初始化为零</p>
+</li>
+<li><p>进行必要的设置，如找到元数据信息，gc分代年龄等，在对象头中。</p>
+</li>
+<li><p>构造函数，class文件的<code>&lt;init&gt;()</code>方法</p>
+</li>
+</ol>
+<h3 id="对象的内存布局"><a href="#对象的内存布局" class="headerlink" title="对象的内存布局"></a>对象的内存布局</h3><ol>
+<li><p>对象头：两类信息</p>
+<ul>
+<li>存储对象自身的运行时数据，如HashCode、GC分代年龄、锁标志状态、线程持有的锁、偏向线程ID、偏向时间戳，即Mark Word，动态定义，以便在极小的空间存储尽量多的数据，根据对象的状态复用自己的存储空间。</li>
+<li>类型指针，即对象指向它的类型元数据的指针，jvm通过这个指针来确定该对象是哪个类的实例。并不是所有虚拟机实现都有</li>
+</ul>
+</li>
+<li><p>实例数据：对象真正存储的有效信息，在程序代码里定义的各种类型的字段内容，无论是父类继承的还是子类中定义的。存储顺序收到虚拟机分配策略参数和字段在源码中定义顺序的影响。HotSpot默认是同样宽度的被分配到一起，子类中较窄的变量也允许插入到父类变量的空隙中。</p>
+</li>
+<li><p>对齐填充：不是必然存在的，仅仅是占位符的作用。由于HotSpot自动内存管理系统要求对象起始地址必须是8字节的整数倍，对象头已经被设计为8字节的整数倍，因此如果实例数据部分内有对齐，会通过对齐填充来补全</p>
+</li>
+</ol>
+<h3 id="对象的访问定位"><a href="#对象的访问定位" class="headerlink" title="对象的访问定位"></a>对象的访问定位</h3><p>通过栈上reference数据来操作堆上的具体对象（HotSpot主要使用直接指针的方式）</p>
+<ol>
+<li>句柄：堆中划分一块内存来作为句柄池，reference中存储的是对象的句柄地址。句柄中包含对象实例数据和类型数据各自具体的地址信息。好处是reference中存储的是稳定句柄地址，对象移动时只会改变句柄中的实例数据指针，reference本身不需要被修改</li>
+<li>直接指针：堆中对象的内存布局需考虑如何防止访问类型数据的相关信息，reference中存储的直接就是对象地址。只是访问对象本身的话，就不需要多一次间接访问的开销</li>
+</ol>
+<h2 id="三、OOM分析"><a href="#三、OOM分析" class="headerlink" title="三、OOM分析"></a>三、OOM分析</h2><h3 id="Java堆溢出"><a href="#Java堆溢出" class="headerlink" title="Java堆溢出"></a>Java堆溢出</h3><p>不断创建对象，并保证GC Roots到对象之间有可达路径来避免垃圾回收机制清楚这些对象，那么随着对象数量增加，总容量触及最大堆容量限制就会产生内存溢出异常。xms和xmx配置一样则不可自动扩展</p>
+<ol>
+<li><p>现象：java.lang.OutOfMemoryError后跟Java heap space</p>
+</li>
+<li><p>常规处理方式（-XX: +HeapDumpOnOutOfMemoryError）:</p>
+<ul>
+<li>通过内存映像分析工具对Dump出来的堆转储快照进行分析</li>
+<li>首先确认内存中导致OOM的对象是否必须，即分清楚是出现内存泄露memory leak还是内存溢出memory overflow<blockquote>
+<ul>
+<li>内存泄露：通过工具查看泄露对象到GC Roots的引用链，找到泄露对象是怎样的引用路径，和哪些GC Roots相关联，导致无法回收</li>
+<li>内存溢出：检查堆参数设置，与机器内存对比，看是否还有调整空间，从代码上检查是否存在某些对象生命周期过长，持有状态时间过长，存储结构设计不合理等情况，尽量减少程序运行期的内存消耗</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="虚拟机栈和本地方法栈溢出"><a href="#虚拟机栈和本地方法栈溢出" class="headerlink" title="虚拟机栈和本地方法栈溢出"></a>虚拟机栈和本地方法栈溢出</h3><p>（HotSpot不区分，通过-Xss设定栈容量）</p>
+<p>单线程时无论栈帧太小还是虚拟机栈容量太小，当新的栈帧内存无法分配时，HotSpot都是抛出StackOverflowError，但如果多线程，每个线程的栈分配内存越大，HotSpot也容易产生oom。在像Classic虚拟机这种支持动态扩展栈容量的虚拟机上，则会出现oom。如果是建立过多线程导致的栈内存溢出，在不能减少线程数量或者更换64位虚拟机的情况下，只能通过减少最大堆和减少栈容量来换取更多的线程。</p>
+<h3 id="方法区和运行时常量池溢出"><a href="#方法区和运行时常量池溢出" class="headerlink" title="方法区和运行时常量池溢出"></a>方法区和运行时常量池溢出</h3><p>CGLib操作字节码时会生成大量的动态类，可能填满方法区，还有大量JSP或动态产生JSP的应用。jdk8后，永久代淘汰，改为本地内存中实现元空间，达到初始空间大小就会触发垃圾收集进行类型卸载，同时收集器会对该值进行调整，如果释放大量空间则降低该值，如果释放较少的空间，则在不超过MaxMetaspaceSize的情况下适当提高该值</p>
+<h3 id="本机直接内存溢出"><a href="#本机直接内存溢出" class="headerlink" title="本机直接内存溢出"></a>本机直接内存溢出</h3><p>直接内存Direct Memory的容量大小可以通过-XX: MaxDirectMemorySize参数设置，不指定则默认和Xmx一致</p>
+<blockquote>
+<p>明显特征：heap dump文件不会看见什么明显的异常，如果内存溢出后dump文件很小，而程序中又直接或间接使用了DirectMemory（典型的间接使用是NIO），就可以考虑检查一下直接内存方面的原因</p>
+</blockquote>
+]]></content>
+      <tags>
+        <tag>Java</tag>
+      </tags>
+  </entry>
 </search>
